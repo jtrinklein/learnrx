@@ -2,11 +2,48 @@ var codeMirrors = [],
 	last = new Date(),
 	state = null;
 
-window.updateTabs = function() {
+function initTabs() {
+	$('.lesson-link').hide();
+	$('.lesson-link').first().show();
+	$('.lesson-tab').each(function(index,item) {
+		$('.lesson-link-' + index).on('click', function(){
+			codeMirrors[index].setSize();
+		});
+	});
 
-};
+	$( "#content" ).tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
+	$( "#tablist li" ).removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
+
+}
+
+function restoreStateFromStorage() {
+	state = localStorage.getItem('jtrinkleinLearnRX');
+	if (!state) {
+		return;
+	}
+
+	state = JSON.parse(state);
+
+	if (!state.answers) {
+		return;
+	}
+
+	state.answers.forEach(function(answer,index) {
+		var lesson = $('#lesson-' + index);
+		lesson.find('.code').val(answer);
+
+		var verifier = window.getVerifierForLessonByIndex(index);
+
+		if (window.answerIsVerified(verifier, answer, lesson[0])) {
+			lesson.find('.post').show();
+			$('.lesson-link-' + (index+1)).show();
+		}
+
+	});
+
+}
 window.onload = function() {
-
+	initTabs();
 	/**
 	 * Fix indentation of formatted code to not have any indentation
 	 */
@@ -14,55 +51,29 @@ window.onload = function() {
 		removeIndentation(item);
 	});
 
-
-	/**
-	 * Initialize lessons from previous session
-	 */
-	state = localStorage.getItem("newState");
-/*	if (state) {
-		state = JSON.parse(state);
-		var firstUnfinishedQuestion;
-
-		$(".lesson").each(function(cnt,item) {
-			$('.lesson-link-'+cnt).show();
-
-			var go = $(".go", item)[0],
-				code = $(".code", item)[0],
-				post = $(".post", item)[0];
-
-			if (cnt < state.answers.length) {
-				$(code).val(state.answers[cnt]);
-				//item.style.visibility = "visible";
-				$('#lesson-' + (cnt+1)).addClass('lesson-tab');
-				if (post !== undefined) {
-					//post.style.visibility = "visible";
-				}
-			}
-			else if (cnt === state.answers.length) {
-				//item.style.visibility = "visible";
-			}
-		});
-	}
-*/
 	/**
 	 * Initialize lessons
 	 */
 	var lessons = $(".lesson");
 	lessons.hide();
-	lessons.addClass('lesson-tab');
+	lessons.find('.post').hide();
+
+	/**
+	* Initialize lessons from previous session
+	*/
+	restoreStateFromStorage();
+
 	lessons.each(function(cnt, item) {
-		var me = $(item);
-		me.attr('id', 'lesson-'+cnt);
+		var lesson = $(item);
 
-
-		var go = $(".go", item)[0],
-			output = $(".output", item)[0],
-			code = $(".code", item)[0],
-			showAnswer = $(".showAnswer", item)[0],
-			answer = $(".answer", item).text(),
-			resetSprite = $(".resetSprite", item)[0],
-			sprite = $(".sprite", item)[0],
-			codeMirror = CodeMirror.fromTextArea(code, {
+		var go = lesson.find('.go'),
+			output = lesson.find('.output'),
+			code = lesson.find('.code'),
+			showAnswer = lesson.find('.showAnswer'),
+			answer = lesson.find('.answer').text(),
+			resetSprite = lesson.find('.resetSprite'),
+			sprite = lesson.find('.sprite'),
+			codeMirror = CodeMirror.fromTextArea(code[0], {
 				lineNumbers: true,
 				matchBrackets: true,
 				mode: "text/typescript",
@@ -70,69 +81,51 @@ window.onload = function() {
 				indentWithTabs: false,
 				extraKeys: {
 					"F4": function(cm) {
-					  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+					cm.setOption("fullScreen", !cm.getOption("fullScreen"));
 					},
 					"Esc": function(cm) {
-					  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+					if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
 					}
-				  }
+				}
 			}),
-			post = $(".post", item)[0],
-			verifierScript = $(".verifier", item).text(),
-			controls = $(".control", item);
+			post = lesson.find('.post'),
+			verifierScript = lesson.find('.verifier').text(),
+			controls = lesson.find('.control');
 
 		codeMirrors.push(codeMirror);
-		go.onclick = function() {
+		go.on('click', function() {
 			try {
 				var verifier = eval("(" + verifierScript + ")");
 
-				try {
-					codeMirror.save();
-					saveAllAnswers();
-					verifier($(code).val(), item);
-					if (post !== undefined) {
-						//post.style.visibility = "visible";
-					}
-					if (cnt < lessons.length - 1) {
-						//lessons[cnt + 1].style.visibility = "visible";
-						$('.lesson-link-' + (cnt+1)).show();
-					}
-
-				} catch (ex) {
-					alert(ex);
+				codeMirror.save();
+				saveAllAnswers();
+				verifier($(code).val(), item);
+				post.show();
+				// show next lesson link
+				if (cnt < (lessons.length - 1)) {
+					$('.lesson-link-' + (cnt+1)).show();
 				}
+
 			} catch (ex) {
 				alert(ex);
 			}
-		};
-
-		if (showAnswer) {
-			showAnswer.onclick = function() {
-				codeMirror.setValue(answer);
-			};
-		}
-
-		if (resetSprite) {
-			resetSprite.onclick = function() {
-				if (sprite) {
-					sprite.style.top = sprite.style.left = "";
-				}
-			};
-		}
-
-	});
-	$("#tablist").empty();
-	$("#tablist").append('<li><a href="#intro" >Introduction</a></li>');
-	$('.lesson-tab').each(function(index,item) {
-		$("#tablist").append('<li class="lesson-link lesson-link-' + index + '"><a href="#' + item.id + '" >Lesson ' + index + '</a></li>');
-		$('.lesson-link-' + index).click(function(){
-			codeMirrors[index].setSize();
 		});
+
+		showAnswer.on('click',function() {
+			codeMirror.setValue(answer);
+		});
+
+		resetSprite.on('click',function() {
+			sprite.css('top', 0);
+			sprite.css('left', 0);
+		});
+
 	});
 
-	$( "#content" ).tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
-	$( "#tablist li" ).removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
-    $('.lesson-link').hide();
-    $('.lesson-link').first().show();
+	var visibleLinks = $('.lesson-link:visible');
+	if (visibleLinks.length > 1) {
+		visibleLinks.last().find('a').click();
+	}
+
 
 }

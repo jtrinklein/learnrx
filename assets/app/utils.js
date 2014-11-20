@@ -269,16 +269,16 @@ function removeIndentation(element) {
 function saveAllAnswers() {
 	var answers = [];
 
-	$(".lesson").each(function(cnt,item) {
-		var go = $(".go", item)[0],
-			code = $(".code", item)[0];
-
-		if (window.getComputedStyle(item).visibility !== "hidden") {
+	$(".lesson").each(function(index,item) {
+		var code = $(".code", item);
+		var lessonLink = $('.lesson-link-' + index);
+		
+		if (lessonLink.is(':visible')) {
 			answers.push($(code).val());
 		}
 	});
 
-	localStorage.setItem("newState", JSON.stringify({answers: answers}));
+	localStorage.setItem('jtrinkleinLearnRX', JSON.stringify({answers: answers}));
 }
 
 
@@ -287,11 +287,35 @@ function saveAllAnswers() {
  * @param num - the lesson number to clear
  */
 window.resetLesson = function(num) {
-	var state = localStorage.getItem("newState");
+	var state = localStorage.getItem('jtrinkleinLearnRX');
 	state = JSON.parse(state);
 	state.answers.splice(num - 1,1);
-	localStorage.setItem("newState", JSON.stringify(state));
+	localStorage.setItem('jtrinkleinLearnRX', JSON.stringify(state));
 	document.location.reload();
+}
+
+window.getVerifierForLessonByIndex = function(index) {
+	var verifierFn = $('#lesson-' + index).find('.verifier').text();
+	var verifier;
+	try {
+		verifier = eval('(' + verifierFn + ')');
+	} catch (ex) {
+		console.log('could not get verifier for #lesson-' + index);
+		console.log(ex);
+		console.log('error eval-ing:');
+		console.log(verifierFn);
+	}
+	return verifier;
+}
+
+window.answerIsVerified = function(verifier, answer, lessonContainer) {
+	try {
+		verifier(answer, lessonContainer);
+		return true;
+	} catch(ex) {
+		console.log(ex);
+	}
+	return false;
 }
 
 /**
@@ -391,4 +415,3 @@ window.showAllAnswers = function(upTo) {
 		return this;
 	}
 })(jQuery);
-

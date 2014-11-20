@@ -1,17 +1,12 @@
 $('.show-answers').on('click', function(){
-    $(".lesson").each(function(cnt,item) {
-        var go = $(".go", item)[0],
-            code = $(".code", item)[0],
-            answer = $(".answer", item).text(),
-            post = $(".post", item)[0],
-            codeMirror = window.codeMirrors[cnt];
-            
-            $(code).val(answer);
-            codeMirror.setValue(answer);
-            codeMirror.save();
-            item.style.visibility = "visible";
-            if (post !== undefined) {
-                post.style.visibility = "visible";
-            }
+    $('.lesson-link').show();
+    window.codeMirrors.forEach(function(codeMirror, index) {
+        var lesson = $('#lesson-' + index),
+            answer = lesson.find('.answer').text();
+
+        lesson.find('.code').val(answer);
+        lesson.find('.post').show();
+        codeMirror.setValue(answer);
+        codeMirror.save();
     });
 });

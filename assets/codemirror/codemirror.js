@@ -7210,7 +7210,7 @@
     for (var i = 0; i < array.length; i++) out[i] = f(array[i], i);
     return out;
   }
-  if ([].map) map = function(array, f) { return array.map(f); };
+  //if ([].map) map = function(array, f) { return array.map(f); };
 
   function createObj(base, props) {
     var inst;
