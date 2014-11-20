@@ -1,6 +1,7 @@
 
 Functional Programming in Javascript
 =======
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/jtrinklein/learnrx?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is a series of interactive exercises for learning Microsoft's Reactive Extensions (Rx) Library for Javascript. So why is the title "Functional Programming in Javascript"? Well it turns out that the key to learning Rx is training yourself to use functional programming to manipulate collections. Functional programming provides developers with the tools to abstract common collection operations into reusable, composable building blocks. You'll be surprised to learn that most of the operations you perform on collections can be accomplished with five simple functions:
 
